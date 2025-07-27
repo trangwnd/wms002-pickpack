@@ -3,6 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <title>Start Picking - WMS002</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #002C60;
+      color: white;
+      padding: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input {
+      padding: 6px;
+      margin-top: 4px;
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+    }
+    button {
+      background-color: white;
+      color: #002C60;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px 5px 0 0;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    #skuList {
+      margin-top: 20px;
+    }
+  </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -26,14 +61,14 @@
         
         skuList.innerHTML = "";
         if (matchedRows.length === 0) {
-          skuList.innerHTML = "<p style='color:red'>❌ Không tìm thấy SKU nào.</p>";
+          skuList.innerHTML = "<p style='color: yellow'>❌ No matching SKU found.</p>";
           startBtn.disabled = true;
           return;
         }
 
         matchedRows.forEach(([_, row], index) => {
           const div = document.createElement("div");
-          div.textContent = `${index + 1}. SKU: ${row["SKU"] || "(Không có mã SKU)"}`;
+          div.textContent = `${index + 1}. SKU: ${row["SKU"] || "(No SKU found)"}`;
           skuList.appendChild(div);
         });
 
@@ -54,25 +89,26 @@
         });
 
         await update(ref(db), updates);
-        alert("✅ Đã ghi trạng thái STARTED vào Firebase!");
+        alert("✅ Picking started and data updated in Firebase.");
       });
     });
   </script>
 </head>
 <body>
-  <h2>🚚 WMS002 – START PICKING</h2>
-  <label>List ID:</label><br>
+  <h2>🚚 WMS002 – Start Picking</h2>
+
+  <label for="listID">List ID:</label>
   <input type="text" id="listID"><br><br>
 
-  <label>User Name:</label><br>
+  <label for="userName">User Name:</label>
   <input type="text" id="userName"><br><br>
 
-  <label>RF Number:</label><br>
+  <label for="rfNumber">RF Number:</label>
   <input type="text" id="rfNumber"><br><br>
 
   <button id="loadBtn">🔍 Load SKU</button>
   <button id="startBtn" disabled>✅ Start Picking</button>
 
-  <div id="skuList" style="margin-top: 20px;"></div>
+  <div id="skuList"></div>
 </body>
 </html>
