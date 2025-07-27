@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Start Picking - WMS002</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const skuList = document.getElementById("skuList");
+      const loadBtn = document.getElementById("loadBtn");
+      const startBtn = document.getElementById("startBtn");
+
+      let matchedRows = [];
+
+      loadBtn.addEventListener("click", async () => {
+        const listID = document.getElementById("listID").value.trim();
+        const snapshot = await get(ref(db, 'Mastersource'));
+        const data = snapshot.val();
+        matchedRows = Object.entries(data).filter(([_, row]) => (row["List ID"] || "").trim() === listID);
+        
+        skuList.innerHTML = "";
+        if (matchedRows.length === 0) {
+          skuList.innerHTML = "<p style='color:red'>❌ Không tìm thấy SKU nào.</p>";
+          startBtn.disabled = true;
+          return;
+        }
+
+        matchedRows.forEach(([_, row], index) => {
+          const div = document.createElement("div");
+          div.textContent = `${index + 1}. SKU: ${row["SKU"] || "(Không có mã SKU)"}`;
+          skuList.appendChild(div);
+        });
+
+        startBtn.disabled = false;
+      });
+
+      startBtn.addEventListener("click", async () => {
+        const userName = document.getElementById("userName").value.trim();
+        const rfNumber = document.getElementById("rfNumber").value.trim();
+        const startTime = new Date().toISOString();
+
+        const updates = {};
+        matchedRows.forEach(([key]) => {
+          updates[`Mastersource/${key}/Status`] = "Started";
+          updates[`Mastersource/${key}/StartTime`] = startTime;
+          updates[`Mastersource/${key}/UserName`] = userName;
+          updates[`Mastersource/${key}/RFNumber`] = rfNumber;
+        });
+
+        await update(ref(db), updates);
+        alert("✅ Đã ghi trạng thái STARTED vào Firebase!");
+      });
+    });
+  </script>
+</head>
+<body>
+  <h2>🚚 WMS002 – START PICKING</h2>
+  <label>List ID:</label><br>
+  <input type="text" id="listID"><br><br>
+
+  <label>User Name:</label><br>
+  <input type="text" id="userName"><br><br>
+
+  <label>RF Number:</label><br>
+  <input type="text" id="rfNumber"><br><br>
+
+  <button id="loadBtn">🔍 Load SKU</button>
+  <button id="startBtn" disabled>✅ Start Picking</button>
+
+  <div id="skuList" style="margin-top: 20px;"></div>
+</body>
+</html>
